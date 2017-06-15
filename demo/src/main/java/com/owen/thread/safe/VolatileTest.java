@@ -37,7 +37,8 @@ public class VolatileTest {
         while(Thread.activeCount() > 1){
             Thread.yield();
         }
-        
+
+
         System.out.println(test.inc);
     }
 }
