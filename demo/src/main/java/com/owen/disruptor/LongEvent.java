@@ -14,4 +14,11 @@ public class LongEvent {
     public void setValue(long value) {
         this.value = value;
     }
+
+    @Override
+    public String toString() {
+        return "LongEvent{" +
+                "value=" + value +
+                '}';
+    }
 }

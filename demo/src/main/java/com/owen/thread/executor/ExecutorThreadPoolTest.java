@@ -1,7 +1,7 @@
 package com.owen.thread.executor;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Queue;
+import java.util.concurrent.*;
 
 /***
  *
@@ -33,7 +33,15 @@ public class ExecutorThreadPoolTest {
 
     static ExecutorService singleThreadPool   = Executors.newSingleThreadExecutor();
 
+
     public static void main(String[] args) {
+        Executor a = new ThreadPoolExecutor(5, 10,
+                0L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<Runnable>(100));
+
+         a.execute(() -> {
+                
+         });
     }
 
 }

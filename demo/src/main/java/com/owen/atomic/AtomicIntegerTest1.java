@@ -11,8 +11,8 @@ public class AtomicIntegerTest1 implements Runnable {
     private volatile int j = 0;
 
     public void run() {
-        System.out.println(Thread.currentThread().getName() + ":" + netSerialNum.getAndIncrement()+ ","+ (k++) + ","+(j++));
-        
+        System.out.println(Thread.currentThread().getName() + ":" +netSerialNum.get()+","+ netSerialNum.getAndIncrement()+","+netSerialNum.get()+ ","+ (k++) + ","+(j++));
+        System.out.println(netSerialNum.get());
         try {
             //Thread.sleep(1000);
         } catch (Exception e) {
