@@ -1,13 +1,13 @@
-package com.owen.designpatterns.demo.demo2;
+package com.owen.designpatterns.strategy;
 
 public class MallardDuck extends Duck {
 
 	public MallardDuck() {
 	}
 
-	private FlyWithWings flyWithWings;
+	private FlyWithWings flyWithWings = new FlyWithWings();
 
-	private QuackVoice quackVoice;
+	private QuackVoice quackVoice = new QuackVoice() ;
 
 	@Override
 	public void display() {

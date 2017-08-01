@@ -1,4 +1,4 @@
-package com.owen.designpatterns.demo.demo2;
+package com.owen.designpatterns.strategy;
 
 public interface FlyBehavior {
 	void fly();

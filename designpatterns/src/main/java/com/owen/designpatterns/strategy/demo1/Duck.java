@@ -1,6 +1,8 @@
-package com.owen.designpatterns.demo.demo1;
+package com.owen.designpatterns.strategy.demo1;
 
-
+/**
+ * 鸭子抽象超类
+ */
 public abstract class Duck {
 	
 	public void quack(){
@@ -19,7 +21,10 @@ public abstract class Duck {
 
 }
 
-class MallardDuck extends Duck{
+/**
+ * 绿头鸭子
+ */
+class MallardDuck extends Duck {
 
 	@Override
 	public void display() {
@@ -27,7 +32,10 @@ class MallardDuck extends Duck{
 	}
 }
 
-class RedHeadDuck extends Duck{
+/**
+ * 红头鸭子
+ */
+class RedHeadDuck extends Duck {
 
 	@Override
 	public void display() {
