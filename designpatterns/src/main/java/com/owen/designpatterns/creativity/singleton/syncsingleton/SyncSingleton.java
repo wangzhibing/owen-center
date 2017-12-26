@@ -21,7 +21,7 @@ public class SyncSingleton {
 	private static SyncSingleton _singleton = null;
 
 	/** 私有构造方法，防止被实例化 */
-	public SyncSingleton() {
+	private SyncSingleton() {
 
 	}
 

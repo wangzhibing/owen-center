@@ -1,10 +1,10 @@
-package com.owen.designpatterns.decorator.demo1;
+package com.owen.designpatterns.structural.decorator.demo1;
 
-import com.owen.designpatterns.decorator.demo1.beverage.DarkRoastBeverage;
-import com.owen.designpatterns.decorator.demo1.beverage.EspressoBeverage;
-import com.owen.designpatterns.decorator.demo1.decorator.Mocha;
-import com.owen.designpatterns.decorator.demo1.decorator.Soy;
-import com.owen.designpatterns.decorator.demo1.decorator.Whip;
+import com.owen.designpatterns.structural.decorator.demo1.beverage.DarkRoastBeverage;
+import com.owen.designpatterns.structural.decorator.demo1.beverage.EspressoBeverage;
+import com.owen.designpatterns.structural.decorator.demo1.decorator.Mocha;
+import com.owen.designpatterns.structural.decorator.demo1.decorator.Soy;
+import com.owen.designpatterns.structural.decorator.demo1.decorator.Whip;
 
 /**
  * Created by owen on 17/8/2.

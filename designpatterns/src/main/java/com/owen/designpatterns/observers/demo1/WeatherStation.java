@@ -1,5 +1,10 @@
 package com.owen.designpatterns.observers.demo1;
 
+import com.owen.designpatterns.observers.demo1.observer.CurrentConditionsDisplay;
+import com.owen.designpatterns.observers.demo1.observer.ForecastDisplay;
+import com.owen.designpatterns.observers.demo1.observer.StatisticsDisplay;
+import com.owen.designpatterns.observers.demo1.subject.WeatherData;
+
 /**
  * Created by owen on 17/8/1.
  */

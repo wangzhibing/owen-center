@@ -1,4 +1,4 @@
-package com.owen.designpatterns.decorator.demo1;
+package com.owen.designpatterns.structural.decorator.demo1;
 
 /**
  * Created by owen on 17/8/2.

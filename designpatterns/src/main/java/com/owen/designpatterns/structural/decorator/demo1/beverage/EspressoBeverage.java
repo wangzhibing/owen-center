@@ -1,12 +1,12 @@
-package com.owen.designpatterns.decorator.demo1.beverage;
+package com.owen.designpatterns.structural.decorator.demo1.beverage;
 
-import com.owen.designpatterns.decorator.demo1.Beverage;
+import com.owen.designpatterns.structural.decorator.demo1.Beverage;
 
 /**
  * Created by owen on 17/8/2.
  * 具体的饮料：浓缩咖啡 需具体定义价格，及描述
  */
-public class EspressoBeverage extends  Beverage {
+public class EspressoBeverage extends Beverage {
 
     public EspressoBeverage() {
         //定义具体的描述

@@ -1,6 +1,6 @@
-package com.owen.designpatterns.decorator.demo1.decorator;
+package com.owen.designpatterns.structural.decorator.demo1.decorator;
 
-import com.owen.designpatterns.decorator.demo1.Beverage;
+import com.owen.designpatterns.structural.decorator.demo1.Beverage;
 
 /**
  * Created by owen on 17/8/2.

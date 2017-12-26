@@ -10,7 +10,7 @@ public class SimpleSingleton {
 	private static SimpleSingleton _singleton = null;
 
 	/** 私有构造方法，防止被实例化 */
-	public SimpleSingleton() {
+	private SimpleSingleton() {
 	}
 
 	public static SimpleSingleton getInstance() {
