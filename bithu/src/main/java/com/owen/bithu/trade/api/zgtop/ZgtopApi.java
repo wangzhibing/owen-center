@@ -132,7 +132,7 @@ public class ZgtopApi {
                 JSONArray buys = JSONObject.parseArray(JSONObject.parseObject(jsonpObject.getString("data")).getString("asks"));
                 JSONArray sells = JSONObject.parseArray(JSONObject.parseObject(jsonpObject.getString("data")).getString("bids"));
                 System.out.println("时间" + System.currentTimeMillis() + ",buys.size():" + buys.size() + ",sells.size():" + sells.size());
-
+                System.out.println("时间" + System.currentTimeMillis() + ",buys:" + buys.toJSONString() + ",sells:" + sells.toJSONString());
                 if (buys == null || buys.size() < 35) {
                 } else {
                     JSONArray singleJsonArray = (JSONArray) buys.get(34);

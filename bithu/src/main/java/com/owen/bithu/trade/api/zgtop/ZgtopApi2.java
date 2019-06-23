@@ -35,10 +35,10 @@ public class ZgtopApi2 {
     public static final String methodTrade = "api/v1/trade";
 
     public static void main(String[] args) throws Exception {
-        ZgtopApi zgtopApi = new ZgtopApi();
+        //ZgtopApi zgtopApi = new ZgtopApi();
         ZgtopApi2 zgtopApi2 = new ZgtopApi2();
 
-        zgtopApi2.doTradeAndcancel();
+        //zgtopApi2.doTradeAndcancel();
 
         //zgtopApi2.cancelTrade();
 
@@ -46,24 +46,26 @@ public class ZgtopApi2 {
 
         //zgtopApi2.doOpBuyLimit();
 
+        //zgtopApi2.autoTrade4();
+
 
         //**********************核心方法**********************
         //1.深度
-//        Thread t = new Thread() {
-//            @Override
-//            public void run() {
-//                try {
-//                    zgtopApi2.doDeep();
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        };
-//
-//        t.start();
-//
-//        //2.自动成交
-//        zgtopApi2.autoTrade4();
+        Thread t = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    zgtopApi2.doDeep();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        t.start();
+
+        //2.自动成交
+        zgtopApi2.autoTrade4();
         //*********************************************
 
     }
@@ -379,11 +381,14 @@ public class ZgtopApi2 {
                 sellCount = vRangeInitValue + randomX.nextInt(vRangeMaxValue);
                 buyCount = sellCount / 2;
                 tradePrice = sellPrice.subtract(unitPrice);
+                System.out.println("X>50........");
+
             } else {
                 //当X<50  自动挂 价格（SELL1） 数量为V手买单，价格为（SELL1） 数量为v/2额卖单
                 buyCount = vRangeInitValue + randomX.nextInt(vRangeMaxValue);
                 sellCount = buyCount / 2;
                 tradePrice = sellPrice;
+                System.out.println("X<50........");
             }
 
             //3.挂单：
@@ -414,9 +419,9 @@ public class ZgtopApi2 {
 
             //3.3.开始挂单
             JSONObject jsonpSellObject = HttpUtils.sendPostRequestForJson(url + methodTrade, mapSellParmas);
-            System.out.println("【jsonpSellObject】:" + JSON.toJSONString(jsonpSellObject));
+            System.out.println("【卖单jsonpSellObject】:" + JSON.toJSONString(jsonpSellObject));
             JSONObject jsonBuyObject = HttpUtils.sendPostRequestForJson(url + methodTrade, mapBuyParmas);
-            System.out.println("【jsonBuyObject】:" + JSON.toJSONString(jsonBuyObject));
+            System.out.println("【买单jsonBuyObject】:" + JSON.toJSONString(jsonBuyObject));
 
             //每次做完一笔，需沉睡splitTime毫秒
             System.out.println("自动成交解散******************");
@@ -468,31 +473,77 @@ public class ZgtopApi2 {
             System.out.println("最新的委托买单信息：" + buys.toJSONString());
             System.out.println("最新的委托卖单信息：" + sells.toJSONString());
 
+            System.out.println("buys.size()=" + buys.size() + ",sells.size()=" + sells.size());
             if (buys == null || buys.size() < 35) {
-                doOpBuyLimit();
+                System.out.println("buys买单长度不够，进入深度。。。");
+                int diff = 35 - buys.size();
+                JSONArray lastSingleBuyJsonArray = (JSONArray) buys.get(buys.size() - 1);
+                BigDecimal diffPrice = new BigDecimal(lastSingleBuyJsonArray.get(0).toString());
+                doOpBuyLimit(diff, diffPrice);
             } else {
                 JSONArray singleJsonArray = (JSONArray) buys.get(35);
                 BigDecimal singleBuyPrice = new BigDecimal(singleJsonArray.get(0).toString());
-                if (expectBuy100Price.compareTo(singleBuyPrice) != 0) {
-                    doOpBuyLimit();
+                BigDecimal diffUnit = singleBuyPrice.subtract(expectBuy100Price);
+                System.out.println("buy>=35,但是价格不相等，相差：" + diffUnit);
+                if (diffUnit.compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal divideNum = diffUnit.divide(unitPrice);
+                    System.out.println("buy>=35,但是价格不相等，divideNum：" + divideNum);
+                    if (divideNum.compareTo(new BigDecimal(20)) > 0) {
+                        doOpBuyLimit();
+                    }
                 }
             }
 
             if (sells == null || sells.size() < 35) {
-                doOpSellLimit();
+                System.out.println("sells卖单长度不够，进入深度。。。");
+                int diff = 35 - sells.size();
+                JSONArray lastSingleSellJsonArray = (JSONArray) sells.get(buys.size() - 1);
+                BigDecimal diffPrice = new BigDecimal(lastSingleSellJsonArray.get(0).toString());
+                doOpSellLimit(diff, diffPrice);
             } else {
                 JSONArray singleJsonArray = (JSONArray) sells.get(35);
                 BigDecimal singleSellPrice = new BigDecimal(singleJsonArray.get(0).toString());
-                if (expectSell100Price.compareTo(singleSellPrice) != 0) {
-                    doOpSellLimit();
+                BigDecimal diffUnit = singleSellPrice.subtract(expectSell100Price);
+                System.out.println("sell>=35,但是价格不相等，相差：" + diffUnit);
+                if (diffUnit.compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal divideNum = diffUnit.divide(unitPrice);
+                    System.out.println("sell>=35,但是价格不相等，divideNum：" + divideNum);
+                    if (divideNum.compareTo(new BigDecimal(20)) > 0) {
+                        doOpSellLimit();
+                    }
                 }
             }
 
             System.out.println("深度处理结束*******");
-
             Thread.sleep(10000l);
         }
 
+    }
+
+
+    public void doOpBuyLimit(int diff, BigDecimal price) {
+        System.out.println("进入doOpBuyLimit，diff:"+diff+",price:"+price);
+        BigDecimal buyTradePrice = BigDecimal.ZERO;
+        int vRangeInitValue = 400;
+        int vRangeMaxValue = 200;
+        Random randomX = new Random();
+        for (int i = 1; i <= diff; i++) {
+            buyTradePrice = price.subtract(unitPrice.multiply(new BigDecimal(i)));
+            Map<String, Object> mapBuyParmas = new TreeMap<>();
+            mapBuyParmas.put("symbol", symbol);
+            mapBuyParmas.put("amount", vRangeInitValue + randomX.nextInt(vRangeMaxValue));
+            mapBuyParmas.put("price", buyTradePrice);
+            mapBuyParmas.put("type", "buy");
+            mapBuyParmas.put("key", key);
+            mapBuyParmas.put("secret", secret);
+            String buySign = HttpUtils.getSignature(mapBuyParmas);
+            mapBuyParmas.put("sign", buySign);
+            mapBuyParmas.remove("secret");
+
+            //3.3.开始挂单
+            JSONObject jsonpBuyObject = HttpUtils.sendPostRequestForJson(url + methodTrade, mapBuyParmas);
+            System.out.println("判断差" + i + ",深度连续挂单【买】第" + i + "单,返回信息:" + jsonpBuyObject);
+        }
     }
 
     /**
@@ -542,6 +593,33 @@ public class ZgtopApi2 {
         System.out.println("深度连续挂单【买】100单,耗时:" + (System.currentTimeMillis() - sTime));
         System.out.println("买挂单结束*******");
     }
+
+
+    public void doOpSellLimit(int diff, BigDecimal price) {
+        System.out.println("进入doOpSellLimit，diff:"+diff+",price:"+price);
+        BigDecimal sellTradePrice = BigDecimal.ZERO;
+        int vRangeInitValue = 400;
+        int vRangeMaxValue = 200;
+        Random randomX = new Random();
+        for (int i = 1; i <= diff; i++) {
+            sellTradePrice = price.add(unitPrice.multiply(new BigDecimal(i)));
+            Map<String, Object> mapSellParmas = new TreeMap<>();
+            mapSellParmas.put("symbol", symbol);
+            mapSellParmas.put("amount", vRangeInitValue + randomX.nextInt(vRangeMaxValue));
+            mapSellParmas.put("price", sellTradePrice);
+            mapSellParmas.put("type", "sell");
+            mapSellParmas.put("key", key);
+            mapSellParmas.put("secret", secret);
+            String buySign = HttpUtils.getSignature(mapSellParmas);
+            mapSellParmas.put("sign", buySign);
+            mapSellParmas.remove("secret");
+
+            //3.3.开始挂单
+            JSONObject jsonpSellObject = HttpUtils.sendPostRequestForJson(url + methodTrade, mapSellParmas);
+            System.out.println("判断差" + i + ",深度连续挂单【卖】第" + i + "单,返回信息:" + jsonpSellObject);
+        }
+    }
+
 
     /**
      * 挂卖单
@@ -797,7 +875,6 @@ public class ZgtopApi2 {
             System.out.println("【jsonpSellObject】:" + JSON.toJSONString(jsonpBuyObject));
 
 
-
             String tradeId = jsonpBuyObject.get("id").toString();
             System.out.println("&&&&&&&&&撤单前状态：");
             this.getTrandView(tradeId);
@@ -847,7 +924,7 @@ public class ZgtopApi2 {
             JSONObject jsonpObject = HttpUtils.sendGetRequestForJson(url + method, map);
             JSONArray jsonArray = (JSONArray) jsonpObject.get("data");
             for (int i = 0; i < jsonArray.size(); i++) {
-                JSONObject jsonObject = (JSONObject) jsonArray.get(0);
+                JSONObject jsonObject = (JSONObject) jsonArray.get(i);
                 String tradeId = jsonObject.get("id").toString();
 
 
@@ -866,7 +943,7 @@ public class ZgtopApi2 {
 
                 JSONObject jsonpObjectCancel = HttpUtils.sendPostRequestForJson(url + method2, canelMap);
 
-                System.out.println(jsonpObjectCancel.toString());
+                System.out.println("撤单开始：" + "，挂单ID:" + tradeId + ",撤单结果：" + jsonpObjectCancel.toString());
 
             }
 
