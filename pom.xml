@@ -96,6 +96,7 @@
 	<modules>
 		
 		<module>designpatterns</module>
+		<module>bithu</module>
 		<module>demo</module>
 	
 	</modules>

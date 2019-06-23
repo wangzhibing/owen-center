@@ -1,14 +1,10 @@
 package com.owen.disruptor;
 
 import com.google.common.collect.Queues;
-import com.lmax.disruptor.EventFactory;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.dsl.Disruptor;
-import jdk.nashorn.internal.ir.debug.JSONWriter;
 import org.junit.Test;
 
-import java.util.Deque;
-import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -136,6 +132,8 @@ public class SingleThread {
     @Test
     public void test3() throws InterruptedException {
         int bufferSize = 1048576;
+
+
 
         Disruptor<LongEvent> disruptor = new Disruptor<LongEvent>(LongEvent::new, bufferSize, Executors.defaultThreadFactory());
         disruptor.handleEventsWith((LongEvent event, long sequence, boolean ednOfBatch) -> {

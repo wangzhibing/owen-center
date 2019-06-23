@@ -1,14 +1,13 @@
 package com.owen.designpatterns.creativity.factory.abstractfactory;
 
-import com.owen.designpatterns.creativity.factory.MailSender;
 import com.owen.designpatterns.creativity.factory.Sender;
+import com.owen.designpatterns.creativity.factory.SmsSender;
 
-public class SendMailFactory implements Provider {
+public class SendSmslFactory implements Provider {
 
 	@Override
 	public Sender produce() {
-
-		return new MailSender();
+		return new SmsSender();
 	}
 
 }

@@ -20,6 +20,9 @@ public class CyclicBarrierTest {
         executor.submit(new Thread(new Runner(barrier, "3号选手")));
 
         executor.shutdown();
+
+
+        System.out.println("主来了。。。");
     }
 }
 
