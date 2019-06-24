@@ -7,6 +7,7 @@ public class SimpleCurrentMapTest {
 
         
             Thread a = new Thread(new Runnable() {
+                @Override
                 public void run() {
 
                     for(int i=0;i<100;i++){
@@ -23,6 +24,7 @@ public class SimpleCurrentMapTest {
             a.start();
             
             Thread b = new Thread(new Runnable() {
+                @Override
                 public void run() {
                     for(int i=0;i<100;i++){
                         System.out.println();
