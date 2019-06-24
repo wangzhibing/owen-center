@@ -363,76 +363,81 @@ public class ZgtopApi2 {
 
 
         while (true) {
-            System.out.println("自动成交开始******************");
-            //设置每次获取随机数X,范围是【0~100】
-            int x = randomX.nextInt(xRange);
+            try{
+                System.out.println("自动成交开始******************");
+                //设置每次获取随机数X,范围是【0~100】
+                int x = randomX.nextInt(xRange);
 
-            //获取当前价格
-            String method = "/api/v1/ticker";
-            Map map = new HashMap();
-            map.put("symbol", symbol);
-            JSONObject jsonpObject = HttpUtils.sendGetRequestForJson(url + method, map);
-            JSONObject dataJSONObject = (JSONObject) jsonpObject.get("data");
-            BigDecimal currentPrice = new BigDecimal(dataJSONObject.get("last").toString());
-            BigDecimal buyPrice = new BigDecimal(dataJSONObject.get("buy").toString());
-            BigDecimal sellPrice = new BigDecimal(dataJSONObject.get("sell").toString());
+                //获取当前价格
+                String method = "/api/v1/ticker";
+                Map map = new HashMap();
+                map.put("symbol", symbol);
+                JSONObject jsonpObject = HttpUtils.sendGetRequestForJson(url + method, map);
+                JSONObject dataJSONObject = (JSONObject) jsonpObject.get("data");
+                BigDecimal currentPrice = new BigDecimal(dataJSONObject.get("last").toString());
+                BigDecimal buyPrice = new BigDecimal(dataJSONObject.get("buy").toString());
+                BigDecimal sellPrice = new BigDecimal(dataJSONObject.get("sell").toString());
 
 
-            //对平均值判断处理
-            int sellCount = 0;
-            int buyCount = 0;
-            BigDecimal tradePrice = BigDecimal.ZERO;
-            if (x > 50) {
-                //当X>50自动挂价格（SELL1-i） 数量 V手 卖单，挂价格为(SELL1-i) V/2的买单
-                sellCount = vRangeInitValue + randomX.nextInt(vRangeMaxValue);
-                buyCount = sellCount / 2;
-                tradePrice = sellPrice.subtract(unitPrice);
-                System.out.println("X>50........");
+                //对平均值判断处理
+                int sellCount = 0;
+                int buyCount = 0;
+                BigDecimal tradePrice = BigDecimal.ZERO;
+                if (x > 50) {
+                    //当X>50自动挂价格（SELL1-i） 数量 V手 卖单，挂价格为(SELL1-i) V/2的买单
+                    sellCount = vRangeInitValue + randomX.nextInt(vRangeMaxValue);
+                    buyCount = sellCount / 2;
+                    tradePrice = sellPrice.subtract(unitPrice);
+                    System.out.println("X>50........");
 
-            } else {
-                //当X<50  自动挂 价格（SELL1） 数量为V手买单，价格为（SELL1） 数量为v/2额卖单
-                buyCount = vRangeInitValue + randomX.nextInt(vRangeMaxValue);
-                sellCount = buyCount / 2;
-                tradePrice = sellPrice;
-                System.out.println("X<50........");
+                } else {
+                    //当X<50  自动挂 价格（SELL1） 数量为V手买单，价格为（SELL1） 数量为v/2额卖单
+                    buyCount = vRangeInitValue + randomX.nextInt(vRangeMaxValue);
+                    sellCount = buyCount / 2;
+                    tradePrice = sellPrice;
+                    System.out.println("X<50........");
+                }
+
+                //3.挂单：
+                String methodTrade = "api/v1/trade";
+                //3.1.卖一挂单信息
+                Map<String, Object> mapSellParmas = new TreeMap<>();
+                mapSellParmas.put("symbol", symbol);
+                mapSellParmas.put("amount", sellCount);
+                mapSellParmas.put("price", tradePrice);
+                mapSellParmas.put("type", "sell");
+                mapSellParmas.put("key", key);
+                mapSellParmas.put("secret", secret);
+                String sellSign = HttpUtils.getSignature(mapSellParmas);
+                mapSellParmas.put("sign", sellSign);
+                mapSellParmas.remove("secret");
+
+                //3.2.买一挂单信息
+                Map<String, Object> mapBuyParmas = new TreeMap<>();
+                mapBuyParmas.put("symbol", symbol);
+                mapBuyParmas.put("amount", buyCount);
+                mapBuyParmas.put("price", tradePrice);
+                mapBuyParmas.put("type", "buy");
+                mapBuyParmas.put("key", key);
+                mapBuyParmas.put("secret", secret);
+                String buySign = HttpUtils.getSignature(mapBuyParmas);
+                mapBuyParmas.put("sign", buySign);
+                mapBuyParmas.remove("secret");
+
+                //3.3.开始挂单
+                JSONObject jsonpSellObject = HttpUtils.sendPostRequestForJson(url + methodTrade, mapSellParmas);
+                System.out.println("【卖单jsonpSellObject】:" + JSON.toJSONString(jsonpSellObject));
+                JSONObject jsonBuyObject = HttpUtils.sendPostRequestForJson(url + methodTrade, mapBuyParmas);
+                System.out.println("【买单jsonBuyObject】:" + JSON.toJSONString(jsonBuyObject));
+
+                //每次做完一笔，需沉睡splitTime毫秒
+                System.out.println("自动成交解散******************");
+                Random ran = new Random();
+                Thread.sleep((1 + ran.nextInt(2)) * 1000);
+            }catch (Exception e){
+                //有异常继续处理
+                e.printStackTrace();
             }
-
-            //3.挂单：
-            String methodTrade = "api/v1/trade";
-            //3.1.卖一挂单信息
-            Map<String, Object> mapSellParmas = new TreeMap<>();
-            mapSellParmas.put("symbol", symbol);
-            mapSellParmas.put("amount", sellCount);
-            mapSellParmas.put("price", tradePrice);
-            mapSellParmas.put("type", "sell");
-            mapSellParmas.put("key", key);
-            mapSellParmas.put("secret", secret);
-            String sellSign = HttpUtils.getSignature(mapSellParmas);
-            mapSellParmas.put("sign", sellSign);
-            mapSellParmas.remove("secret");
-
-            //3.2.买一挂单信息
-            Map<String, Object> mapBuyParmas = new TreeMap<>();
-            mapBuyParmas.put("symbol", symbol);
-            mapBuyParmas.put("amount", buyCount);
-            mapBuyParmas.put("price", tradePrice);
-            mapBuyParmas.put("type", "buy");
-            mapBuyParmas.put("key", key);
-            mapBuyParmas.put("secret", secret);
-            String buySign = HttpUtils.getSignature(mapBuyParmas);
-            mapBuyParmas.put("sign", buySign);
-            mapBuyParmas.remove("secret");
-
-            //3.3.开始挂单
-            JSONObject jsonpSellObject = HttpUtils.sendPostRequestForJson(url + methodTrade, mapSellParmas);
-            System.out.println("【卖单jsonpSellObject】:" + JSON.toJSONString(jsonpSellObject));
-            JSONObject jsonBuyObject = HttpUtils.sendPostRequestForJson(url + methodTrade, mapBuyParmas);
-            System.out.println("【买单jsonBuyObject】:" + JSON.toJSONString(jsonBuyObject));
-
-            //每次做完一笔，需沉睡splitTime毫秒
-            System.out.println("自动成交解散******************");
-            Random ran = new Random();
-            Thread.sleep((1 + ran.nextInt(2)) * 1000);
         }
     }
 
