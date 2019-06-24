@@ -452,83 +452,90 @@ public class ZgtopApi2 {
 
         //2.
         doOpSellLimit();
+
         while (true) {
-            System.out.println("深度处理开始*******");
-            //3获取当前价格
-            Map map = new HashMap();
-            map.put("symbol", symbol);
-            JSONObject jsonpObject = HttpUtils.sendGetRequestForJson(url + method, map);
-            JSONObject dataJSONObject = (JSONObject) jsonpObject.get("data");
-            BigDecimal currentPrice = new BigDecimal(dataJSONObject.get("last").toString());
-            BigDecimal buyPrice = new BigDecimal(dataJSONObject.get("buy").toString());
-            BigDecimal sellPrice = new BigDecimal(dataJSONObject.get("sell").toString());
+            try{
+                System.out.println("深度处理开始*******");
+                //3获取当前价格
+                Map map = new HashMap();
+                map.put("symbol", symbol);
+                JSONObject jsonpObject = HttpUtils.sendGetRequestForJson(url + method, map);
+                JSONObject dataJSONObject = (JSONObject) jsonpObject.get("data");
+                BigDecimal currentPrice = new BigDecimal(dataJSONObject.get("last").toString());
+                BigDecimal buyPrice = new BigDecimal(dataJSONObject.get("buy").toString());
+                BigDecimal sellPrice = new BigDecimal(dataJSONObject.get("sell").toString());
 
-            //预测价格
-            BigDecimal expectBuy100Price = buyPrice.subtract(unitPrice.multiply(new BigDecimal(35)));
-            BigDecimal expectSell100Price = sellPrice.add(unitPrice.multiply(new BigDecimal(35)));
+                //预测价格
+                BigDecimal expectBuy100Price = buyPrice.subtract(unitPrice.multiply(new BigDecimal(35)));
+                BigDecimal expectSell100Price = sellPrice.add(unitPrice.multiply(new BigDecimal(35)));
 
-            //获取时时实际的买100，卖100的价格。
-            String method = "/api/v1/depth";
-            Map mapDeepth = new HashMap();
-            mapDeepth.put("symbol", symbol);
-            mapDeepth.put("merge", "4");
-            JSONObject jsonDeepthObject = HttpUtils.sendGetRequestForJson(url + method, mapDeepth);
-            System.out.println("getDepth:" + JSON.toJSONString(jsonDeepthObject));
-            //asks - 委买单[价格, 委单量]，价格从高到低排序
-            //bids - 委卖单[价格, 委单量]，价格从低到高排序
-            JSONArray buys = JSONObject.parseArray(JSONObject.parseObject(jsonDeepthObject.getString("data")).getString("asks"));
-            JSONArray sells = JSONObject.parseArray(JSONObject.parseObject(jsonDeepthObject.getString("data")).getString("bids"));
+                //获取时时实际的买100，卖100的价格。
+                String method = "/api/v1/depth";
+                Map mapDeepth = new HashMap();
+                mapDeepth.put("symbol", symbol);
+                mapDeepth.put("merge", "4");
+                JSONObject jsonDeepthObject = HttpUtils.sendGetRequestForJson(url + method, mapDeepth);
+                System.out.println("getDepth:" + JSON.toJSONString(jsonDeepthObject));
+                //asks - 委买单[价格, 委单量]，价格从高到低排序
+                //bids - 委卖单[价格, 委单量]，价格从低到高排序
+                JSONArray buys = JSONObject.parseArray(JSONObject.parseObject(jsonDeepthObject.getString("data")).getString("asks"));
+                JSONArray sells = JSONObject.parseArray(JSONObject.parseObject(jsonDeepthObject.getString("data")).getString("bids"));
 
-            System.out.println("预期委托买价：" + expectBuy100Price);
-            System.out.println("预期委托卖价：" + expectSell100Price);
-            System.out.println("最新的委托买单信息：" + buys.toJSONString());
-            System.out.println("最新的委托卖单信息：" + sells.toJSONString());
+                System.out.println("预期委托买价：" + expectBuy100Price);
+                System.out.println("预期委托卖价：" + expectSell100Price);
+                System.out.println("最新的委托买单信息：" + buys.toJSONString());
+                System.out.println("最新的委托卖单信息：" + sells.toJSONString());
 
-            System.out.println("buys.size()=" + buys.size() + ",sells.size()=" + sells.size());
-            if (buys == null || buys.size() < 35) {
-                System.out.println("buys买单长度不够，进入深度。。。");
-                int diff = 35 - buys.size();
-                JSONArray lastSingleBuyJsonArray = (JSONArray) buys.get(buys.size() - 1);
-                BigDecimal diffPrice = new BigDecimal(lastSingleBuyJsonArray.get(0).toString());
-                doOpBuyLimit(diff, diffPrice);
-            } else {
-                JSONArray singleJsonArray = (JSONArray) buys.get(35);
-                BigDecimal singleBuyPrice = new BigDecimal(singleJsonArray.get(0).toString());
-                BigDecimal diffUnit = expectBuy100Price.subtract(singleBuyPrice);
-                System.out.println("buy>=35,但是价格不相等，相差：" + diffUnit);
-                if (diffUnit.compareTo(BigDecimal.ZERO) > 0) {
-                    BigDecimal divideNum = diffUnit.divide(unitPrice);
-                    System.out.println("buy>=35,但是价格不相等，divideNum：" + divideNum + ",twentyBuyPrice【上次深度第20档买价格】=" + twentyBuyPrice + "，currentPrice=" + currentPrice);
-                    //第20档的价格是否>最新价格（买单）
-                    if (divideNum.compareTo(new BigDecimal(10)) > 0 && twentyBuyPrice.compareTo(currentPrice) > 0) {
-                        doOpBuyLimit();
+                System.out.println("buys.size()=" + buys.size() + ",sells.size()=" + sells.size());
+                if (buys == null || buys.size() < 35) {
+                    System.out.println("buys买单长度不够，进入深度。。。");
+                    int diff = 35 - buys.size();
+                    JSONArray lastSingleBuyJsonArray = (JSONArray) buys.get(buys.size() - 1);
+                    BigDecimal diffPrice = new BigDecimal(lastSingleBuyJsonArray.get(0).toString());
+                    doOpBuyLimit(diff, diffPrice);
+                } else {
+                    JSONArray singleJsonArray = (JSONArray) buys.get(35);
+                    BigDecimal singleBuyPrice = new BigDecimal(singleJsonArray.get(0).toString());
+                    BigDecimal diffUnit = expectBuy100Price.subtract(singleBuyPrice);
+                    System.out.println("buy>=35,但是价格不相等，相差：" + diffUnit);
+                    if (diffUnit.compareTo(BigDecimal.ZERO) > 0) {
+                        BigDecimal divideNum = diffUnit.divide(unitPrice);
+                        System.out.println("buy>=35,但是价格不相等，divideNum：" + divideNum + ",twentyBuyPrice【上次深度第20档买价格】=" + twentyBuyPrice + "，currentPrice=" + currentPrice);
+                        //第20档的价格是否>最新价格（买单）
+                        if (divideNum.compareTo(new BigDecimal(10)) > 0 && twentyBuyPrice.compareTo(currentPrice) > 0) {
+                            doOpBuyLimit();
+                        }
                     }
                 }
-            }
 
-            if (sells == null || sells.size() < 35) {
-                System.out.println("sells卖单长度不够，进入深度。。。");
-                int diff = 35 - sells.size();
-                JSONArray lastSingleSellJsonArray = (JSONArray) sells.get(buys.size() - 1);
-                BigDecimal diffPrice = new BigDecimal(lastSingleSellJsonArray.get(0).toString());
-                doOpSellLimit(diff, diffPrice);
-            } else {
-                JSONArray singleJsonArray = (JSONArray) sells.get(35);
-                BigDecimal singleSellPrice = new BigDecimal(singleJsonArray.get(0).toString());
-                BigDecimal diffUnit = singleSellPrice.subtract(expectSell100Price);
-                System.out.println("sell>=35,但是价格不相等，相差：" + diffUnit+ ",twentySellPrice【上次深度第20档卖价格】=" + twentySellPrice + "，currentPrice=" + currentPrice);
+                if (sells == null || sells.size() < 35) {
+                    System.out.println("sells卖单长度不够，进入深度。。。");
+                    int diff = 35 - sells.size();
+                    JSONArray lastSingleSellJsonArray = (JSONArray) sells.get(buys.size() - 1);
+                    BigDecimal diffPrice = new BigDecimal(lastSingleSellJsonArray.get(0).toString());
+                    doOpSellLimit(diff, diffPrice);
+                } else {
+                    JSONArray singleJsonArray = (JSONArray) sells.get(35);
+                    BigDecimal singleSellPrice = new BigDecimal(singleJsonArray.get(0).toString());
+                    BigDecimal diffUnit = singleSellPrice.subtract(expectSell100Price);
+                    System.out.println("sell>=35,但是价格不相等，相差：" + diffUnit+ ",twentySellPrice【上次深度第20档卖价格】=" + twentySellPrice + "，currentPrice=" + currentPrice);
 
-                if (diffUnit.compareTo(BigDecimal.ZERO) > 0) {
-                    BigDecimal divideNum = diffUnit.divide(unitPrice);
-                    System.out.println("sell>=35,但是价格不相等，divideNum：" + divideNum);
-                    if (divideNum.compareTo(new BigDecimal(10)) > 0 && twentySellPrice.compareTo(currentPrice) < 0) {
-                        doOpSellLimit();
+                    if (diffUnit.compareTo(BigDecimal.ZERO) > 0) {
+                        BigDecimal divideNum = diffUnit.divide(unitPrice);
+                        System.out.println("sell>=35,但是价格不相等，divideNum：" + divideNum);
+                        if (divideNum.compareTo(new BigDecimal(10)) > 0 && twentySellPrice.compareTo(currentPrice) < 0) {
+                            doOpSellLimit();
+                        }
                     }
                 }
+
+                System.out.println("深度处理结束*******");
+                Thread.sleep(10000l);
+            }catch (Exception e){
+                System.out.println("有异常。。。。。");
+                e.printStackTrace();
             }
 
-            System.out.println("深度处理结束*******");
-            Thread.sleep(10000l);
         }
 
     }
@@ -971,6 +978,7 @@ public class ZgtopApi2 {
 
             //System.out.println("【挂单查询】:" + jsonpObject.toString());
         } catch (Exception e) {
+            System.out.println("有异常。。。。。");
             e.printStackTrace();
         }
     }

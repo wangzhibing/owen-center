@@ -1,4 +1,4 @@
-package com.owen.bithu.trade.api.biki;
+package com.owen.bithu.trade.api.bigoo;
 
 
 import com.google.common.collect.Sets;
@@ -27,9 +27,13 @@ public class BiGooApi {
     private static final String key = "MVU0iinRElZjn3irH25s2fan1FuBS4XGklx7KFIlmfQoUFChcGO52jZZuChA2d9o";
     private static final String secret = "UFHwlkFpD8oXkTY2IgeNf13SFALmJ0AWyABG5rRlYePiUPHoCOOimkmxzrUA8y1N";
     private static final String baseUrl = "https://api.bigoo.pro/";
+
+    public volatile BigDecimal twentyBuyPrice = BigDecimal.ZERO;
+    public volatile BigDecimal twentySellPrice = BigDecimal.ZERO;
+
     private BHexApiRestClient bHexApiRestClient;
     {
-        BHexApiClientFactory factory = BHexApiClientFactory.newInstance(key, secret);
+        BHexApiClientFactory factory = BHexApiClientFactory.newInstance(baseUrl,key, secret);
         bHexApiRestClient = factory.newRestClient();
     }
 
@@ -39,22 +43,25 @@ public class BiGooApi {
     private static final Integer autoTradeInitAmount = 2;
     private static final Integer autoTradeMaxAmount = 2;
 
-    private static final Integer orderDepth = 3;
+    private static final Integer orderDepth = 35;
 
     public static void main(String[] args) throws Exception {
         BiGooApi zgtopApi = new BiGooApi();
         ExecutorService executorService = Executors.newFixedThreadPool(3);
+
         executorService.submit(() -> {
             try{
-                zgtopApi.autoTrade2();
+                zgtopApi.doDeep();
             }catch (Exception ex){
                 ex.printStackTrace();
             }
             return null;
         });
+
+        Thread.sleep(2000L);
         executorService.submit(() -> {
             try{
-                zgtopApi.doDeep();
+                zgtopApi.autoTrade2();
             }catch (Exception ex){
                 ex.printStackTrace();
             }
@@ -76,10 +83,7 @@ public class BiGooApi {
 
         //6.变量6：随机数，判断阈值
         int xRange = 100;
-
-
         Random randomX = new Random();
-
 
         while (true) {
             //设置每次获取随机数X,范围是【0~100】
@@ -88,7 +92,6 @@ public class BiGooApi {
             //获取当前价格
             TickerPrice bookTicker = bHexApiRestClient.getPrice(symbol);
             BigDecimal currentPrice = new BigDecimal(bookTicker.getPrice());
-
 
             //对平均值判断处理
             int sellCount = 0;
@@ -183,6 +186,7 @@ public class BiGooApi {
 
         //2.
         doOpSellLimit();
+
         while (true) {
             System.out.println("深度处理开始*******");
             //3获取当前价格
@@ -203,7 +207,11 @@ public class BiGooApi {
             System.out.println("当前卖单价位数量 " + sellPrices.size());
 
             TickerPrice bookTicker = bHexApiRestClient.getPrice(symbol);
+
+            //当前价格
             BigDecimal currentPrice = new BigDecimal(bookTicker.getPrice());
+
+
             if(buyPrices.size() < orderDepth){
                 for (int i = 1; i <= orderDepth; i++) {
                     BigDecimal tradePrice = currentPrice.subtract(unitPrice.multiply(new BigDecimal(i)));
