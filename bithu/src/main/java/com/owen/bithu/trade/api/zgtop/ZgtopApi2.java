@@ -34,6 +34,10 @@ public class ZgtopApi2 {
     //挂单路径
     public static final String methodTrade = "api/v1/trade";
 
+    public volatile BigDecimal twentyBuyPrice = BigDecimal.ZERO;
+
+    public volatile BigDecimal twentySellPrice = BigDecimal.ZERO;
+
     public static void main(String[] args) throws Exception {
         //ZgtopApi zgtopApi = new ZgtopApi();
         ZgtopApi2 zgtopApi2 = new ZgtopApi2();
@@ -63,6 +67,8 @@ public class ZgtopApi2 {
         };
 
         t.start();
+
+        Thread.sleep(20000l);
 
         //2.自动成交
         zgtopApi2.autoTrade4();
@@ -426,7 +432,7 @@ public class ZgtopApi2 {
             //每次做完一笔，需沉睡splitTime毫秒
             System.out.println("自动成交解散******************");
             Random ran = new Random();
-            Thread.sleep((1 + ran.nextInt(10)) * 1000);
+            Thread.sleep((1 + ran.nextInt(2)) * 1000);
         }
     }
 
@@ -483,12 +489,13 @@ public class ZgtopApi2 {
             } else {
                 JSONArray singleJsonArray = (JSONArray) buys.get(35);
                 BigDecimal singleBuyPrice = new BigDecimal(singleJsonArray.get(0).toString());
-                BigDecimal diffUnit = singleBuyPrice.subtract(expectBuy100Price);
+                BigDecimal diffUnit = expectBuy100Price.subtract(singleBuyPrice);
                 System.out.println("buy>=35,但是价格不相等，相差：" + diffUnit);
                 if (diffUnit.compareTo(BigDecimal.ZERO) > 0) {
                     BigDecimal divideNum = diffUnit.divide(unitPrice);
-                    System.out.println("buy>=35,但是价格不相等，divideNum：" + divideNum);
-                    if (divideNum.compareTo(new BigDecimal(20)) > 0) {
+                    System.out.println("buy>=35,但是价格不相等，divideNum：" + divideNum + ",twentyBuyPrice【上次深度第20档买价格】=" + twentyBuyPrice + "，currentPrice=" + currentPrice);
+                    //第20档的价格是否>最新价格（买单）
+                    if (divideNum.compareTo(new BigDecimal(10)) > 0 && twentyBuyPrice.compareTo(currentPrice) > 0) {
                         doOpBuyLimit();
                     }
                 }
@@ -504,11 +511,12 @@ public class ZgtopApi2 {
                 JSONArray singleJsonArray = (JSONArray) sells.get(35);
                 BigDecimal singleSellPrice = new BigDecimal(singleJsonArray.get(0).toString());
                 BigDecimal diffUnit = singleSellPrice.subtract(expectSell100Price);
-                System.out.println("sell>=35,但是价格不相等，相差：" + diffUnit);
+                System.out.println("sell>=35,但是价格不相等，相差：" + diffUnit+ ",twentySellPrice【上次深度第20档卖价格】=" + twentySellPrice + "，currentPrice=" + currentPrice);
+
                 if (diffUnit.compareTo(BigDecimal.ZERO) > 0) {
                     BigDecimal divideNum = diffUnit.divide(unitPrice);
                     System.out.println("sell>=35,但是价格不相等，divideNum：" + divideNum);
-                    if (divideNum.compareTo(new BigDecimal(20)) > 0) {
+                    if (divideNum.compareTo(new BigDecimal(10)) > 0 && twentySellPrice.compareTo(currentPrice) < 0) {
                         doOpSellLimit();
                     }
                 }
@@ -522,7 +530,7 @@ public class ZgtopApi2 {
 
 
     public void doOpBuyLimit(int diff, BigDecimal price) {
-        System.out.println("进入doOpBuyLimit，diff:"+diff+",price:"+price);
+        System.out.println("进入doOpBuyLimit，diff:" + diff + ",price:" + price);
         BigDecimal buyTradePrice = BigDecimal.ZERO;
         int vRangeInitValue = 400;
         int vRangeMaxValue = 200;
@@ -583,6 +591,10 @@ public class ZgtopApi2 {
             mapBuyParmas.put("sign", buySign);
             mapBuyParmas.remove("secret");
 
+            if (i == 20) {
+                this.twentyBuyPrice = buyTradePrice;
+            }
+
             //3.3.开始挂单
             JSONObject jsonpBuyObject = HttpUtils.sendPostRequestForJson(url + methodTrade, mapBuyParmas);
             System.out.println("深度连续挂单【买】第" + i + "单,返回信息:" + jsonpBuyObject);
@@ -596,7 +608,7 @@ public class ZgtopApi2 {
 
 
     public void doOpSellLimit(int diff, BigDecimal price) {
-        System.out.println("进入doOpSellLimit，diff:"+diff+",price:"+price);
+        System.out.println("进入doOpSellLimit，diff:" + diff + ",price:" + price);
         BigDecimal sellTradePrice = BigDecimal.ZERO;
         int vRangeInitValue = 400;
         int vRangeMaxValue = 200;
@@ -613,6 +625,7 @@ public class ZgtopApi2 {
             String buySign = HttpUtils.getSignature(mapSellParmas);
             mapSellParmas.put("sign", buySign);
             mapSellParmas.remove("secret");
+
 
             //3.3.开始挂单
             JSONObject jsonpSellObject = HttpUtils.sendPostRequestForJson(url + methodTrade, mapSellParmas);
@@ -657,7 +670,11 @@ public class ZgtopApi2 {
             mapSellParmas.put("secret", secret);
             String buySign = HttpUtils.getSignature(mapSellParmas);
             mapSellParmas.put("sign", buySign);
+
             mapSellParmas.remove("secret");
+            if (i == 20) {
+                this.twentySellPrice = sellTradePrice;
+            }
 
             //3.3.开始挂单
             JSONObject jsonpSellObject = HttpUtils.sendPostRequestForJson(url + methodTrade, mapSellParmas);
