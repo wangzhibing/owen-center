@@ -1,7 +1,10 @@
 package com.owen.bithu.trade.api.bigoo;
 
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Sets;
+import com.owen.bithu.trade.api.zgtop.util.HttpUtils;
 import io.bhex.api.client.BHexApiClientFactory;
 import io.bhex.api.client.BHexApiRestClient;
 import io.bhex.api.client.domain.account.*;
@@ -12,9 +15,7 @@ import io.bhex.api.client.domain.market.TickerPrice;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -190,57 +191,81 @@ public class BiGooApi {
         while (true) {
             System.out.println("深度处理开始*******");
             //3获取当前价格
-
-            List<Order> openOrders = bHexApiRestClient.getOpenOrders(new OpenOrderRequest());
-            List<Order> buyOrders = openOrders.stream().filter(order -> order.getSide() == OrderSide.BUY).collect(Collectors.toList());
-            List<Order> sellOrders = openOrders.stream().filter(order -> order.getSide() == OrderSide.SELL).collect(Collectors.toList());
-
-            Set<String> buyPrices = Sets.newHashSet();
-            Set<String> sellPrices = Sets.newHashSet();
-            for(Order order : buyOrders){
-                buyPrices.add(order.getPrice());
-            }
-            for(Order order : sellOrders){
-                sellPrices.add(order.getPrice());
-            }
-            System.out.println("当前买单价位数量 " + buyPrices.size());
-            System.out.println("当前卖单价位数量 " + sellPrices.size());
-
-            TickerPrice bookTicker = bHexApiRestClient.getPrice(symbol);
-
-            //当前价格
-            BigDecimal currentPrice = new BigDecimal(bookTicker.getPrice());
+            OrderBook orderBook = bHexApiRestClient.getOrderBook(symbol, orderDepth);
+            BigDecimal currentPrice = new BigDecimal(bHexApiRestClient.getPrice(symbol).getPrice());
+            BigDecimal buyPrice = new BigDecimal(orderBook.getBids().get(0).getPrice());
+            BigDecimal sellPrice = new BigDecimal(orderBook.getAsks().get(0).getPrice());
+            //预测价格
+            BigDecimal expectBuy100Price = buyPrice.subtract(unitPrice.multiply(new BigDecimal(orderDepth)));
+            BigDecimal expectSell100Price = sellPrice.add(unitPrice.multiply(new BigDecimal(orderDepth)));
 
 
-            if(buyPrices.size() < orderDepth){
-                for (int i = 1; i <= orderDepth; i++) {
-                    BigDecimal tradePrice = currentPrice.subtract(unitPrice.multiply(new BigDecimal(i)));
-                    Integer tradeAmount = tradeAmount();
-                    Boolean isNotExist = buyOrders.stream().noneMatch(order -> new BigDecimal(order.getPrice()).equals(tradePrice));
-                    if(isNotExist){
-                        NewOrderResponse buyResponse = bHexApiRestClient.newOrder(NewOrder.limitBuy(symbol, TimeInForce.GTC, tradeAmount + "", tradePrice.toPlainString()));
-                        System.out.println("补充买单" + buyResponse);
+            System.out.println("预期委托买价：" + expectBuy100Price);
+            System.out.println("预期委托卖价：" + expectSell100Price);
+            System.out.println("最新的委托买单信息：" + orderBook.getBids());
+            System.out.println("最新的委托卖单信息：" + orderBook.getAsks());
+
+            System.out.println("buys.size()=" + orderBook.getBids().size() + ",sells.size()=" + orderBook.getAsks().size());
+            if (orderBook.getBids() == null || orderBook.getBids().size() < orderDepth) {
+                System.out.println("buys买单长度不够，进入深度。。。");
+                int diff = orderDepth - orderBook.getBids().size();
+                BigDecimal diffPrice = new BigDecimal(orderBook.getBids().get(orderBook.getBids().size() - 1).getPrice());
+                doOpBuyLimit(diff, diffPrice);
+            } else {
+                BigDecimal singleBuyPrice = new BigDecimal(orderBook.getBids().get(orderDepth).getPrice());
+                BigDecimal diffUnit = expectBuy100Price.subtract(singleBuyPrice);
+                System.out.println("buy>=35,但是价格不相等，相差：" + diffUnit);
+                if (diffUnit.compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal divideNum = diffUnit.divide(unitPrice);
+                    System.out.println("buy>=35,但是价格不相等，divideNum：" + divideNum + ",twentyBuyPrice【上次深度第20档买价格】=" + twentyBuyPrice + "，currentPrice=" + currentPrice);
+                    //第20档的价格是否>最新价格（买单）
+                    if (divideNum.compareTo(new BigDecimal(10)) > 0 && twentyBuyPrice.compareTo(currentPrice) > 0) {
+                        doOpBuyLimit();
                     }
                 }
             }
 
-            if(sellPrices.size() < orderDepth){
-                for (int i = 1; i <= orderDepth; i++) {
-                    BigDecimal tradePrice = currentPrice.add(unitPrice.multiply(new BigDecimal(i)));
-                    Integer tradeAmount = tradeAmount();
-                    Boolean isNotExist = sellOrders.stream().noneMatch(order -> new BigDecimal(order.getPrice()).equals(tradePrice));
-                    if(isNotExist){
-                        NewOrderResponse buyResponse = bHexApiRestClient.newOrder(NewOrder.limitSell(symbol, TimeInForce.GTC, tradeAmount + "", tradePrice.toPlainString()));
-                        System.out.println("补充卖单" + buyResponse);
+            if (orderBook.getAsks() == null || orderBook.getAsks().size() < orderDepth) {
+                System.out.println("sells卖单长度不够，进入深度。。。");
+                int diff = orderDepth - orderBook.getAsks().size();
+                BigDecimal diffPrice = new BigDecimal(orderBook.getAsks().get(orderBook.getAsks().size() - 1).getPrice());
+                doOpSellLimit(diff, diffPrice);
+            } else {
+                BigDecimal singleSellPrice = new BigDecimal(orderBook.getAsks().get(orderDepth).getPrice());
+                BigDecimal diffUnit = singleSellPrice.subtract(expectSell100Price);
+                System.out.println("sell>=35,但是价格不相等，相差：" + diffUnit+ ",twentySellPrice【上次深度第20档卖价格】=" + twentySellPrice + "，currentPrice=" + currentPrice);
+
+                if (diffUnit.compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal divideNum = diffUnit.divide(unitPrice);
+                    System.out.println("sell>=35,但是价格不相等，divideNum：" + divideNum);
+                    if (divideNum.compareTo(new BigDecimal(10)) > 0 && twentySellPrice.compareTo(currentPrice) < 0) {
+                        doOpSellLimit();
                     }
                 }
             }
-
             System.out.println("深度处理结束*******");
 
             Thread.sleep(10000l);
         }
+    }
 
+    public void doOpBuyLimit(int diff, BigDecimal price) {
+        System.out.println("进入doOpBuyLimit，diff:" + diff + ",price:" + price);
+        for (int i = 1; i <= diff; i++) {
+            BigDecimal buyTradePrice = price.subtract(unitPrice.multiply(new BigDecimal(i)));
+            NewOrderResponse buyResponse = bHexApiRestClient.newOrder(NewOrder.limitBuy(symbol, TimeInForce.GTC, tradeAmount() + "", buyTradePrice.toPlainString()));
+            System.out.println("判断差" + i + ",深度连续挂单【买】第" + i + "单,返回信息:" + buyResponse);
+        }
+    }
+
+    public void doOpSellLimit(int diff, BigDecimal price) {
+        System.out.println("进入doOpSellLimit，diff:" + diff + ",price:" + price);
+        for (int i = 1; i <= diff; i++) {
+            BigDecimal sellTradePrice = price.add(unitPrice.multiply(new BigDecimal(i)));
+            int amount = tradeAmount();
+            NewOrderResponse sellResponse = bHexApiRestClient.newOrder(NewOrder.limitSell(symbol, TimeInForce.GTC, amount + "", sellTradePrice.toPlainString()));
+            System.out.println("判断差" + i + ",深度连续挂单【卖】第" + i + "单,返回信息:" + sellResponse);
+        }
     }
 
     /**
@@ -259,6 +284,9 @@ public class BiGooApi {
             int amount = tradeAmount();
             NewOrderResponse buyResponse = bHexApiRestClient.newOrder(NewOrder.limitBuy(symbol, TimeInForce.GTC, amount + "", buyTradePrice.toPlainString()));
             System.out.println("深度连续挂单【买】第" + i + "单,返回信息:" + buyResponse);
+            if (i == 20) {
+                this.twentyBuyPrice = buyTradePrice;
+            }
         }
         System.out.println("深度连续挂单【买】100单,耗时:" + (System.currentTimeMillis() - sTime));
         System.out.println("买挂单结束*******");
@@ -282,6 +310,9 @@ public class BiGooApi {
             int amount = tradeAmount();
             NewOrderResponse sellResponse = bHexApiRestClient.newOrder(NewOrder.limitSell(symbol, TimeInForce.GTC, amount + "", sellTradePrice.toPlainString()));
             System.out.println("深度连续挂单【买】第" + i + "单,返回信息:" + sellResponse);
+            if (i == 20) {
+                this.twentySellPrice = sellTradePrice;
+            }
         }
 
         System.out.println("深度连续挂单【卖】100单,耗时:" + (System.currentTimeMillis() - sTime));
@@ -292,28 +323,5 @@ public class BiGooApi {
         return autoTradeInitAmount + new Random().nextInt(autoTradeMaxAmount);
     }
 
-    /**
-     * 根据策略返回实际价格
-     *
-     * @param buyOne
-     * @param sellOne
-     * @return
-     */
-    private BigDecimal getActivePrice(BigDecimal buyOne, BigDecimal sellOne) {
-
-        //1. strategy 1:random
-        buyOne.add((sellOne.subtract(buyOne)).divide(new BigDecimal(2), BigDecimal.ROUND_HALF_UP));
-
-        BigDecimal diff = sellOne.subtract(buyOne);
-
-        //2.种子为10(可配置，随机取数按比例)
-        float randomIndex = new Random().nextInt(10);
-        if (randomIndex == 0) {
-            randomIndex = 1;
-        }
-
-        float rate = randomIndex / 10;
-        return buyOne.add(diff.multiply(new BigDecimal(rate)), new MathContext(4, RoundingMode.HALF_UP));
-    }
 
 }
