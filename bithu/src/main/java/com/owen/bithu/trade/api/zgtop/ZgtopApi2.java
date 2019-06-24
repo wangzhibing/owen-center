@@ -79,7 +79,7 @@ public class ZgtopApi2 {
         //设置初始值
         int p = 0;
 
-        long splitTime = 5000l;
+        long splitTime = 5000L;
 
         //有界队列20
         LimitQueue<Integer> limitQueueX = new LimitQueue<>(20);

@@ -4,6 +4,9 @@ import com.owen.string.Main;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by owen on 17/5/31.
@@ -13,6 +16,10 @@ public class TestList {
     public static void main(String[] args){
         TestList  tt = new TestList();
         tt.testReference();
+
+        BlockingQueue bq1 = new  ArrayBlockingQueue(5);
+        BlockingQueue bq2 = new LinkedBlockingQueue();
+
     }
 
     public void testReference(){

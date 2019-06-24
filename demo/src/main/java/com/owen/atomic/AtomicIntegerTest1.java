@@ -10,6 +10,7 @@ public class AtomicIntegerTest1 implements Runnable {
     
     private volatile int j = 0;
 
+    @Override
     public void run() {
         System.out.println(Thread.currentThread().getName() + ":" +netSerialNum.get()+","+ netSerialNum.getAndIncrement()+","+netSerialNum.get()+ ","+ (k++) + ","+(j++));
         System.out.println(netSerialNum.get());
