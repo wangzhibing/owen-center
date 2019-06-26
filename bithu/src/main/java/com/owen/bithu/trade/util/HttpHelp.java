@@ -17,8 +17,6 @@ import java.io.IOException;
 
 /**
  * http请求封装
- * Created by chars on 16/3/31 19:57
- * Copyright © mizhuanglicai
  */
 public class HttpHelp {
 
