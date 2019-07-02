@@ -23,6 +23,8 @@ public class ZgtopApi {
 
         ZgtopApi zgtopApi = new ZgtopApi();
 
+        zgtopApi.getBalnce();
+
 //        //币对 QOS/USDT
         String symbol = "87";
 //
@@ -33,7 +35,7 @@ public class ZgtopApi {
 //        zgtopApi.getAllPriceBySymbol();
 //
 //        //3.获取市场深度
-        zgtopApi.getDepth();
+//        zgtopApi.getDepth();
 //
 //        //4.最近的市场交易
 //        zgtopApi.getOrders();
@@ -190,7 +192,6 @@ public class ZgtopApi {
     public void getBalnce() {
         try {
             String method = "/api/v1/balances";
-
             Map map = new TreeMap<>();
             map.put("key", key);
             map.put("secret", secret);
@@ -198,6 +199,13 @@ public class ZgtopApi {
             map.put("sign", sign);
             map.remove("secret");
             JSONObject jsonpObject = HttpUtils.sendGetRequestForJson(url + method, map);
+            JSONArray jsonArrayData = (JSONArray) jsonpObject.get("data");
+            for(int i=0;i<jsonArrayData.size();i++){
+                JSONObject tempJsonObject = (JSONObject)jsonArrayData.get(i);
+                if(tempJsonObject.get("symbol").toString().equals("87")){
+                    System.out.println(tempJsonObject.get("balance"));
+                }
+            }
             System.out.println("【账户信息】:" + jsonpObject.toString());
         } catch (Exception e) {
             e.printStackTrace();
