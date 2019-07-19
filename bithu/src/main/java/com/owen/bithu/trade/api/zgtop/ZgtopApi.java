@@ -23,13 +23,13 @@ public class ZgtopApi {
 
         ZgtopApi zgtopApi = new ZgtopApi();
 
-        zgtopApi.getBalnce();
+//        zgtopApi.getBalnce();
 
 //        //币对 QOS/USDT
         String symbol = "87";
 //
 //        //1.获取当前最新行情,无需sign
-        //zgtopApi.getPriceBySymbol(symbol);
+ //       zgtopApi.getPriceBySymbol(symbol);
 //
 //        //2.获取当前所有最新行情,无需sign
 //        zgtopApi.getAllPriceBySymbol();
@@ -50,7 +50,7 @@ public class ZgtopApi {
         //      zgtopApi.getTrandList();
 
 //        //8.查询订单信息
-//       zgtopApi.getTrandView();
+       zgtopApi.getTrandView(108601821+"");
 //
 //        //9.取消订单
 //        zgtopApi.cancel_trade();
@@ -59,7 +59,7 @@ public class ZgtopApi {
 //        zgtopApi.tradeBuy();
 //
 //        //11.获取资产对照信息
-//        zgtopApi.getAllCoinsMapper();
+ //       zgtopApi.getAllCoinsMapper();
     }
 
 
@@ -313,7 +313,7 @@ public class ZgtopApi {
             String method = "/api/v1/cancel_trade";
 
             Map<String, Object> map = new TreeMap<>();
-            map.put("id", "1");
+            map.put("id", "108601821");
 
             map.put("key", key);
             map.put("secret", secret);

@@ -4,10 +4,9 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
+
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
@@ -62,14 +61,15 @@ public class HttpHelp {
     }
 
     public static void main(String[] args) {
+
         long start = System.currentTimeMillis();
-        HttpPost post = HttpHelp.getPostRequest("http://121.43.148.191:8007/services/callback/capitalSuccess");
-        String json = "{\"amount\":1,\"status\":\"00000000\",\"tradeNo\":\"20160331000904000000000902309229\",\"accountTradeType\":\"cancel\"}";
+        HttpGet get = HttpHelp.getGetRequest("https://openapi.biki.com/open/api/get_ticker?symbol=vdxusdt");
+        //String json = "{\"amount\":1,\"status\":\"00000000\",\"tradeNo\":\"20160331000904000000000902309229\",\"accountTradeType\":\"cancel\"}";
         HttpResponse response = null;
         try {
-            StringEntity entity = new StringEntity(json, ContentType.APPLICATION_JSON);
-            post.setEntity(entity);
-            response = HttpHelp.execute(post);
+            //StringEntity entity = new StringEntity(json, ContentType.APPLICATION_JSON);
+            //post.setEntity(entity);
+            response = HttpHelp.execute(get);
             long end = System.currentTimeMillis();
             System.out.println(end - start);
             if (response.getStatusLine().getStatusCode() == 200) {
@@ -90,6 +90,38 @@ public class HttpHelp {
 
             }
         }
+
+
+
+
+//        long start = System.currentTimeMillis();
+//        HttpPost post = HttpHelp.getPostRequest("http://121.43.148.191:8007/services/callback/capitalSuccess");
+//        String json = "{\"amount\":1,\"status\":\"00000000\",\"tradeNo\":\"20160331000904000000000902309229\",\"accountTradeType\":\"cancel\"}";
+//        HttpResponse response = null;
+//        try {
+//            StringEntity entity = new StringEntity(json, ContentType.APPLICATION_JSON);
+//            post.setEntity(entity);
+//            response = HttpHelp.execute(post);
+//            long end = System.currentTimeMillis();
+//            System.out.println(end - start);
+//            if (response.getStatusLine().getStatusCode() == 200) {
+//                String result = EntityUtils.toString(response.getEntity(),
+//                        "UTF-8");
+//                System.out.println(result);
+//            }
+//            System.out.println("code" + response.getStatusLine().getStatusCode());
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }finally {
+//            if(response!=null){
+//                try {
+//                    EntityUtils.consume(response.getEntity());
+//                }catch (Exception e){
+//                    e.printStackTrace();
+//                }
+//
+//            }
+//        }
 
     }
 }

@@ -26,8 +26,11 @@ public class BikiExchangeApi {
      * @param args
      */
     /*****正式****/
-    public static final String API_KEY = "21269ff9073e7674bf3117aebf26eac2";
-    public static final String SECRET_KEY = "852ef2e71e38a3e72bff8a66ada3fc73";
+    public static final String API_KEY = "5afaa7dd32849e6fa98658daf7dc4526";
+    public static final String SECRET_KEY = "9669fa948a6dd28eb119fbf3569f1f03";
+
+//    Key: 5afaa7dd32849e6fa98658daf7dc4526
+//    Secret: 9669fa948a6dd28eb119fbf3569f1f03
 
     /***暂停的key**/
 //    public static final String API_KEY = "4db2be46d40648d4b152629276dc445c";
@@ -42,6 +45,26 @@ public class BikiExchangeApi {
     public static void main(String[] args) {
         BikiExchangeApi api = new BikiExchangeApi();
         api.doGetFinanc();
+
+//        Long orderInfoCurrentTime = System.currentTimeMillis() / 1000;
+//        Map orderInfpOrderMap = new TreeMap();
+//        orderInfpOrderMap.put("order_id", 830634+"");
+//        orderInfpOrderMap.put("symbol", "vdxusdt");
+//        orderInfpOrderMap.put("api_key", BikiExchangeApi.API_KEY);
+//        orderInfpOrderMap.put("time", orderInfoCurrentTime.toString());
+//        String orderInfolinkString = MD5Util.createLinkStringByBiki(orderInfpOrderMap);
+//        orderInfolinkString = orderInfolinkString + SECRET_KEY;
+//        String orderinfomysign = MD5Util.getMD5String(orderInfolinkString).toLowerCase();
+//        orderInfpOrderMap.put("sign", orderinfomysign);
+//        JSONObject orderInfojsonpSellObject = HttpUtils.sendGetRequestForJson(url + "/open/api/order_info", orderInfpOrderMap);
+//        System.out.println("OrderInfo=" + orderInfojsonpSellObject.toJSONString());
+//
+//        api.cancelOrder();
+//        for(int i=0;i<1;i++){
+//            api.newOrder();
+//            System.out.println("****************************************");
+//        }
+
     }
 
 

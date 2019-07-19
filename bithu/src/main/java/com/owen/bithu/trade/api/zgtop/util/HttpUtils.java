@@ -48,6 +48,13 @@ public class HttpUtils {
             connectionManager.getParams().setMaxTotalConnections(maxTotalConnections);
             connectionManager.getParams().setDefaultMaxConnectionsPerHost(maxConnectionPerHost);
             httpClient = new HttpClient(connectionManager);
+
+//            connectionManager = new MultiThreadedHttpConnectionManager();
+//            connectionManager.getParams().setConnectionTimeout(connectionTimeOut);
+//            connectionManager.getParams().setSoTimeout(socketTimeOut);
+//            connectionManager.getParams().setMaxTotalConnections(maxTotalConnections);
+//            connectionManager.getParams().setDefaultMaxConnectionsPerHost(maxConnectionPerHost);
+            httpClient = new HttpClient(connectionManager);
             System.out.println("HttpClient初始化完毕！");
         }
         return httpClient;
@@ -78,7 +85,17 @@ public class HttpUtils {
             }
 
             getMethod = new GetMethod(url);
+
+           // getMethod.setRequestHeader("Accept", "text/html,application/xhtml+xml,application/xml;");
+            getMethod.setRequestHeader("Accept-Language", "zh-cn");
+            getMethod.setRequestHeader("User-Agent", "Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3");
+            getMethod.setRequestHeader("Accept-Charset", encoding);
+            getMethod.setRequestHeader("Keep-Alive", "300");
+            getMethod.setRequestHeader("Connection", "Keep-Alive");
+            getMethod.setRequestHeader("Cache-Control", "no-cache");
+
             getMethod.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=" + encoding);
+
             int statusCode = getInstance().executeMethod(getMethod);
             if (HttpStatus.SC_OK == statusCode) {
                 response = getMethod.getResponseBodyAsString();
@@ -125,6 +142,14 @@ public class HttpUtils {
     public static String sendPostRequest(String uri, Map<String, Object> params, String encoding){
         String response = "";
         PostMethod postMethod = new PostMethod(uri);
+
+        postMethod.setRequestHeader("Accept-Language", "zh-cn");
+        postMethod.setRequestHeader("User-Agent", "Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3");
+        postMethod.setRequestHeader("Accept-Charset", encoding);
+        postMethod.setRequestHeader("Keep-Alive", "300");
+        postMethod.setRequestHeader("Connection", "Keep-Alive");
+        postMethod.setRequestHeader("Cache-Control", "no-cache");
+
         postMethod.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=" + encoding);
 
         if(params != null && params.size() > 0){
